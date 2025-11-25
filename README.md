@@ -1,6 +1,5 @@
-🇵🇭 E-SHOP: Curated Clothing Store (Laravel Template)
+🇵🇭 E-SHOP
 
-This project is a single-page e-commerce template built on the Laravel framework, focusing on the Philippine market (PHP currency, PayMongo integration) and featuring modern administrative and user experience enhancements, including a complete Dark Mode implementation.
 
 ✨ Key Features
 
