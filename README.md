@@ -24,3 +24,44 @@ PHP (8.2+)
 Composer
 
 MySQL Database (or equivalent supported by Laravel)
+
+composer install
+
+cp .env.example .env
+
+php artisan key:generate
+
+* set up your .env [ DATABASE, MAILER, PAYMONGO API AND WEBHOOK]
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=[DATABASE]
+DB_USERNAME=[USERNAME]
+DB_PASSWORD=[PASSWORD]
+
+MAIL_MAILER=smtp
+MAIL_SCHEME=null
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=[GMAIL]
+MAIL_PASSWORD=[GMAILPASSWORD]
+MAIL_FROM_ADDRESS=[GMAIL]
+MAIL_FROM_NAME="${APP_NAME}"
+
+# PayMongo
+PAYMONGO_PUBLIC_KEY=[PUBLICAPI]
+PAYMONGO_SECRET_KEY=[SECRETAPI]
+PAYMONGO_WEBHOOK_SECRET= [WEBHOOKURL]       
+
+# Payments config
+CURRENCY=PHP
+PAYMONGO_PAYMENT_METHOD_TYPES=gcash,paymaya,card
+
+import the ecommerce.sql into database.
+
+php artisan storage:link
+
+php artisan serve
+
+
