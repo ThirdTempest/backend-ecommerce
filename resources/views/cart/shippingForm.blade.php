@@ -20,6 +20,12 @@
                 <div class="bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-300 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong class="font-bold">Validation Error!</strong>
                     <span class="block sm:inline">Please correct the following fields.</span>
+                    <!-- Display specific validation errors to help debugging -->
+                    <ul class="list-disc ml-5 mt-2">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
@@ -41,9 +47,11 @@
                         <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                         <input id="email" name="email" type="email" value="{{ old('email', Auth::user()->email) }}" required
                             class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white @error('email') border-red-500 @enderror"
-                            disabled {{-- Disable editing authenticated email to avoid confusing PayMongo API --}}
+                            {{-- REMOVED disabled attribute --}}
                         >
+                        {{-- Kept hidden field just in case, though the visible field now submits the value --}}
                         <input type="hidden" name="email" value="{{ Auth::user()->email }}">
+                        @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="md:col-span-2">

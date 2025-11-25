@@ -8,6 +8,7 @@ use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\DB; // Needed for robust queries
 
 class AdminController extends Controller
 {
@@ -15,34 +16,34 @@ class AdminController extends Controller
     private $lowStockThreshold = 10;
 
     /**
-     * Show the Admin Dashboard Index. (UPDATED)
+     * Show the Admin Dashboard Index.
      */
     public function index()
     {
         // 1. Total Products (REAL DB COUNT)
         $productCount = Product::count();
         
-        // 2. Pending Orders (REAL DB QUERY)
-        $pendingOrdersCount = Order::where('status', 'pending')->count(); 
+        // 2. Pending Orders (FIXED: Counting both pending and processing)
+        $pendingOrdersCount = Order::whereIn('status', ['pending', 'processing'])->count(); 
 
         // 3. Low Stock Alerts (REAL DB CALCULATION based on threshold)
         $lowStockCount = Product::where('stock', '<=', $this->lowStockThreshold)->count();
 
-        // 4. Product Quick List (NEW)
+        // 4. Product Quick List
         $recentProducts = Product::orderBy('created_at', 'desc')->limit(5)->get();
 
         return view('admin.index', compact(
             'productCount', 
             'pendingOrdersCount', 
             'lowStockCount',
-            'recentProducts' // NEW
+            'recentProducts'
         ));
     }
 
     // --- PRODUCT MANAGEMENT ---
 
     /**
-     * Display a listing of all products (Admin View), handles searching. (UPDATED)
+     * Display a listing of all products (Admin View), handles searching.
      */
     public function indexProducts(Request $request)
     {
@@ -59,17 +60,11 @@ class AdminController extends Controller
         return view('admin.products.index', compact('products', 'searchQuery'));
     }
 
-    /**
-     * Show the form for creating a new product.
-     */
     public function createProduct()
     {
         return view('admin.products.create');
     }
 
-    /**
-     * Store a newly created product in storage.
-     */
     public function storeProduct(Request $request)
     {
         $validated = $request->validate([
@@ -98,17 +93,11 @@ class AdminController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product added successfully!');
     }
 
-    /**
-     * Show the form for editing the specified product.
-     */
     public function editProduct(Product $product)
     {
         return view('admin.products.edit', compact('product'));
     }
 
-    /**
-     * Update the specified product in storage.
-     */
     public function updateProduct(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -144,7 +133,11 @@ class AdminController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully!');
     }
     
-    // ... (Order Management methods remain unchanged) ...
+    // --- ORDER MANAGEMENT ---
+
+    /**
+     * Display low stock products.
+     */
     public function lowStockAlerts()
     {
         $products = Product::where('stock', '<=', $this->lowStockThreshold)
@@ -155,6 +148,10 @@ class AdminController extends Controller
 
         return view('admin.products.lowStock', compact('products', 'lowStockThreshold'));
     }
+
+    /**
+     * Display all orders for admin management.
+     */
     public function indexOrders()
     {
         $orders = Order::with('user', 'items.product')
@@ -163,6 +160,20 @@ class AdminController extends Controller
         
         return view('admin.orders.index', compact('orders'));
     }
+
+    /**
+     * Display details of a specific order. (NEW)
+     */
+    public function showOrder(Order $order)
+    {
+        // Eager load needed data before passing to view
+        $order->load('user', 'items.product'); 
+        return view('admin.orders.show', compact('order'));
+    }
+
+    /**
+     * Update the status of a specific order.
+     */
     public function updateOrderStatus(Request $request, Order $order)
     {
         $validated = $request->validate([

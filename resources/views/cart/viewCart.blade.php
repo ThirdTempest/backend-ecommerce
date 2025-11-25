@@ -30,16 +30,38 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">Price: ₱{{ number_format($item['price'], 2) }}</p>
                         </div>
                         
-                        <!-- Quantity -->
-                        <div class="mx-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Qty</label>
-                            <input type="number" value="{{ $item['quantity'] }}" min="1" disabled
-                                class="w-16 text-center border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-                            >
+                        <!-- Quantity Controls (FUNCTIONAL) -->
+                        <div class="mx-4 flex items-center justify-center space-x-1">
+                            <form action="{{ route('cart.update') }}" method="POST" class="flex items-center">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $id }}">
+                                
+                                <!-- Decrement Button -->
+                                <button type="submit" name="quantity" value="{{ $item['quantity'] - 1 }}" 
+                                    class="p-1 border border-gray-300 dark:border-gray-600 rounded-l-lg dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 font-bold"
+                                    title="Decrease Quantity / Remove if zero"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                </button>
+
+                                <!-- Static Quantity Display -->
+                                <input type="number" value="{{ $item['quantity'] }}" min="1" disabled
+                                    class="w-12 text-center border-y border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm p-0 m-0"
+                                >
+                                
+                                <!-- Increment Button -->
+                                <button type="submit" name="quantity" value="{{ $item['quantity'] + 1 }}" 
+                                    class="p-1 border border-gray-300 dark:border-gray-600 rounded-r-lg dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 font-bold"
+                                    title="Increase Quantity"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                                
+                            </form>
                         </div>
                         
                         <!-- Subtotal -->
-                        <div class="text-right ml-4">
+                        <div class="text-right ml-4 w-20">
                             <span class="text-xl font-bold text-primary">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
                         </div>
                         
@@ -76,7 +98,7 @@
 
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">Taxes calculated upon final processing.</p>
                 
-                <!-- Checkout Button (UPDATED to link to shipping form) -->
+                <!-- Checkout Button -->
                 <a href="{{ route('checkout.showForm') }}"
                     class="w-full mt-6 inline-block text-center py-3 px-4 rounded-lg shadow-lg text-lg font-bold text-white bg-primary hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150 transform hover:scale-[1.01]"
                 >

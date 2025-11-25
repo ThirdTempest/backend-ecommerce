@@ -22,11 +22,10 @@ Route::controller(ShopController::class)->group(function () {
 
     // Utility Pages (Contact Routes)
     Route::get('/contact', 'contact')->name('contact'); 
-    Route::post('/contact', 'storeContact')->name('contact.store'); // NEW POST ROUTE
+    Route::post('/contact', 'storeContact')->name('contact.store'); 
     Route::get('/terms', 'termsOfService')->name('legal.terms');
     Route::get('/privacy', 'privacyPolicy')->name('legal.privacy');
     Route::get('/accessibility', 'accessibilityStatement')->name('legal.accessibility'); 
-
 
     // Authentication Views (GET)
     Route::middleware('guest')->group(function () {
@@ -43,13 +42,14 @@ Route::controller(ShopController::class)->group(function () {
         Route::get('/profile', 'profile')->name('profile');
         Route::post('/logout', 'logout')->name('logout');
         
-        // PROFILE SUB-PAGES
+        // --- PROFILE SUB-PAGES ---
         Route::get('/profile/orders', 'orderHistory')->name('profile.orders');
         Route::get('/profile/addresses', 'savedAddresses')->name('profile.addresses');
         
-        // Cart Functionality Routes
+        // Cart Functionality Routes (UPDATED)
         Route::post('/cart/add', 'addToCart')->name('cart.add'); 
         Route::post('/cart/remove', 'removeFromCart')->name('cart.remove'); 
+        Route::post('/cart/update', 'updateCartQuantity')->name('cart.update');
         Route::get('/cart', 'viewCart')->name('cart.view'); 
         
         // Checkout Flow
@@ -80,8 +80,9 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         // Low Stock Alerts
         Route::get('/products/low-stock', 'lowStockAlerts')->name('products.lowStock'); 
         
-        // Order Management
+        // Order Management (UPDATED)
         Route::get('/orders', 'indexOrders')->name('orders.index');
+        Route::get('/orders/{order}', 'showOrder')->name('orders.show'); // NEW ROUTE FOR DETAILS
         Route::put('/orders/{order}/status', 'updateOrderStatus')->name('orders.updateStatus');
     });
 });
