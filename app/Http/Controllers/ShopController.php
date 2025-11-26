@@ -208,7 +208,7 @@ class ShopController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer', // Changed to allow quantity 0 which is handled below
+            'quantity' => 'required|integer', 
         ]);
 
         $productId = $request->product_id;
@@ -221,12 +221,10 @@ class ShopController extends Controller
             if (isset($cart[$productId])) {
                 $productName = $cart[$productId]['name'];
                 
-                // CRITICAL FIX: If quantity is 0 or less, remove the item
                 if ($newQuantity <= 0) {
                     unset($cart[$productId]);
                     $message = $productName . ' was removed from your cart.';
                 } else {
-                    // Update quantity
                     $cart[$productId]['quantity'] = $newQuantity;
                     $message = $productName . ' quantity updated to ' . $newQuantity . '.';
                 }
@@ -301,12 +299,11 @@ class ShopController extends Controller
             return redirect()->route('shop')->with('error', 'Your cart is empty or you are not logged in.'); 
         }
         
-        // FIX: Re-enabling explicit validation for data integrity
+        // FIX: Stricter Phone validation to prevent API rejection
         $validated = $request->validate([
             'name' => 'required|string|max:255', 
-            // FIX: Allow email validation to pass if the field contains a valid email
             'email' => 'required|email|max:255', 
-            'phone' => ['required', 'string', 'max:15', 'regex:/^(09|\+639)\d{9}$/'], // Applying stricter Philippine phone validation
+            'phone' => ['required', 'string', 'max:15', 'regex:/^(09|\+639)\d{9}$/'], // PH format
             'line1' => 'required|string|max:255', 
             'city' => 'required|string|max:100', 
             'postal_code' => 'required|string|max:10', 
@@ -328,8 +325,7 @@ class ShopController extends Controller
         foreach ($cart as $item) { 
             $lineItems[] = [ 
                 'currency' => 'PHP', 
-                // FIX: Send UNIT PRICE in centavos. PayMongo multiplies by quantity.
-                'amount' => intval(round($item['price'] * 100)), 
+                'amount' => intval(round($item['price'] * 100)), // Unit Price
                 'name' => $item['name'], 
                 'quantity' => (int)$item['quantity'], 
             ]; 
@@ -364,7 +360,7 @@ class ShopController extends Controller
                     ], 
                     'send_email' => true, 
                     'currency' => 'PHP',
-                    'amount' => $totalInCentavos, // CRITICAL: Total amount in centavos
+                    'amount' => $totalInCentavos, 
                     'payment_method_types' => ['gcash', 'paymaya', 'card'], 
                     'line_items' => $lineItems, 
                     'success_url' => $successUrl, 
@@ -388,25 +384,24 @@ class ShopController extends Controller
             $response = Http::withBasicAuth($secretKey, '')
                 ->post('https://api.paymongo.com/v1/checkout_sessions', $payload);
             
-            // Check if API call was successful and got a redirection URL
             if ($response->successful() && $response->json('data.attributes.checkout_url')) {
                 $checkoutUrl = $response->json('data.attributes.checkout_url');
-                
-                // Redirect user to the PayMongo hosted payment page
                 return redirect()->away($checkoutUrl);
             }
             
-            // Log the error response body from PayMongo for debugging
+            // If API call fails, provide detailed error
+            $apiError = $response->json('errors.0.detail') ?? 'Unknown API error.';
             \Log::error("PayMongo API Error: " . $response->body());
             
-            // Fail gracefully (Redirect back to shipping form)
-            return back()->withErrors(['api' => 'Payment processor error: ' . ($response->json('errors.0.detail') ?? 'Unknown API error.')])
+            return back()->withErrors(['api' => 'Payment processor error: ' . $apiError])
                         ->withInput();
 
         } catch (\Exception $e) {
-            // Handle connection errors
+            // Log the detailed connection error
             \Log::error("PayMongo Connection Error: " . $e->getMessage());
-            return back()->withErrors(['api' => 'Could not connect to payment gateway. Please try again.'])
+            
+            // Return a general connection error message
+            return back()->withErrors(['api' => 'Could not connect to payment gateway. Please check your network and PHP environment (CURL/SSL).'])
                         ->withInput();
         }
     }
@@ -417,13 +412,12 @@ class ShopController extends Controller
         $orderData = Session::pull('pending_order_data');
         if (!$orderData) { return redirect()->route('profile')->with('error', 'Checkout session expired or data missing.'); }
         
-        // FIX: Retrieve total_amount from $orderData array
         $totalAmount = $orderData['total_amount']; 
         
         $order = Order::create([ 
             'user_id' => $orderData['user_id'], 
             'order_number' => 'ESHOP-' . time() . Str::random(4), 
-            'total_amount' => $totalAmount, // Use retrieved variable
+            'total_amount' => $totalAmount, 
             'shipping_address' => $orderData['shipping_address'], 
             'billing_address' => $orderData['billing_address'], 
             'status' => 'processing', 
