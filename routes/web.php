@@ -57,6 +57,9 @@ Route::controller(ShopController::class)->group(function () {
         Route::post('/checkout/initiate', 'initiatePayment')->name('checkout.initiate'); 
         Route::get('/checkout/success', 'checkoutSuccess')->name('checkout.success'); 
         Route::get('/checkout/failure', 'checkoutFailure')->name('checkout.failure'); 
+        
+        // Order Cancellation (NEW ROUTE)
+        Route::post('/order/{order}/cancel', 'cancelOrder')->name('order.cancel'); 
     });
 
     // Authentication Logic (POST)
@@ -82,7 +85,7 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         
         // Order Management (UPDATED)
         Route::get('/orders', 'indexOrders')->name('orders.index');
-        Route::get('/orders/{order}', 'showOrder')->name('orders.show'); // NEW ROUTE FOR DETAILS
+        Route::get('/orders/{order}', 'showOrder')->name('orders.show'); 
         Route::put('/orders/{order}/status', 'updateOrderStatus')->name('orders.updateStatus');
     });
 });

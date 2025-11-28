@@ -37,7 +37,7 @@
                     @forelse ($orders as $order)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <!-- NEW LINK TO ORDER DETAIL PAGE -->
+                                <!-- LINK TO ORDER DETAIL PAGE -->
                                 <a href="{{ route('admin.orders.show', $order) }}" class="text-primary hover:underline">
                                     {{ $order->order_number }}
                                 </a>
@@ -57,13 +57,19 @@
                                     @csrf
                                     @method('PUT')
                                     
+                                    @php
+                                        // Disable selection if the order is already finalized (shipped, completed, or cancelled)
+                                        $isDisabled = in_array($order->status, ['cancelled']);
+                                    @endphp
+
                                     <!-- AUTO-SUBMIT ON CHANGE -->
                                     <select name="status" id="status-{{ $order->id }}" 
-                                        onchange="this.form.submit()"
+                                        @if($isDisabled) disabled @else onchange="this.form.submit()" @endif
                                         class="py-1 px-2 border rounded-lg text-sm focus:ring-primary focus:border-primary w-full max-w-[150px]
-                                            @if($order->status === 'pending' || $order->status === 'processing') border-yellow-400 bg-yellow-50 dark:bg-yellow-900/50 dark:text-yellow-300
+                                            @if(in_array($order->status, ['pending', 'processing'])) border-yellow-400 bg-yellow-50 dark:bg-yellow-900/50 dark:text-yellow-300
                                             @elseif($order->status === 'shipped') border-blue-400 bg-blue-50 dark:bg-blue-900/50 dark:text-blue-300
                                             @elseif($order->status === 'completed') border-green-400 bg-green-50 dark:bg-green-900/50 dark:text-green-300
+                                            @elseif($order->status === 'cancelled') border-gray-400 bg-gray-300 dark:bg-gray-600 dark:text-gray-300
                                             @else border-red-400 bg-red-50 dark:bg-red-900/50 dark:text-red-300
                                             @endif
                                             dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
@@ -72,7 +78,11 @@
                                         <option value="processing" {{ $order->status == 'processing' ? 'selected' : '' }}>Processing</option>
                                         <option value="shipped" {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped</option>
                                         <option value="completed" {{ $order->status == 'completed' ? 'selected' : '' }}>Completed</option>
-                                        <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                        <!-- REMOVED 'CANCELLED' OPTION FOR ADMIN CHOICE -->
+                                        @if($order->status == 'cancelled')
+                                            <!-- Keep the cancelled status visible as the current selection if already cancelled -->
+                                            <option value="cancelled" selected>Cancelled</option>
+                                        @endif
                                     </select>
                                     
                                     <!-- REMOVED UPDATE BUTTON -->

@@ -9,7 +9,6 @@
         <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white mb-4 text-center">
             {{ $currentCategory }} Collection
         </h1>
-        <!-- REMOVED DETAILED FILTER TEXT -->
         <p class="text-xl text-gray-600 dark:text-gray-400 mb-10 text-center max-w-2xl mx-auto">
             Explore our curated selection of {{ strtolower($currentCategory) }}.
         </p>
@@ -86,15 +85,29 @@
                                     ₱{{ number_format($product->price, 2) }}
                                 </span>
                             @endif
+                            
+                            <!-- Stock Indicator (NEW) -->
+                            @if ($product->stock <= 0)
+                                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mt-1">OUT OF STOCK</p>
+                            @elseif ($product->stock <= 5)
+                                <p class="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mt-1">Low Stock ({{ $product->stock }})</p>
+                            @endif
                         </div>
                         
                         <!-- Action Button (Form) -->
                         <form action="{{ route('cart.add') }}" method="POST" class="flex-shrink-0"> 
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <button type="submit" class="bg-primary text-white text-base py-2 px-4 rounded-full hover:bg-green-700 transition duration-300 shadow-md">
-                                Add to Cart
-                            </button>
+
+                            @if ($product->stock > 0)
+                                <button type="submit" class="bg-primary text-white text-base py-2 px-4 rounded-full hover:bg-green-700 transition duration-300 shadow-md">
+                                    Add to Cart
+                                </button>
+                            @else
+                                <button type="button" disabled class="bg-gray-400 text-white text-base py-2 px-4 rounded-full shadow-md cursor-not-allowed">
+                                    Out of Stock
+                                </button>
+                            @endif
                         </form>
                     </div>
                 </div>

@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'E-commerce Template')</title>
 
-    <!-- Google Font: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-
+    <!-- Google Font: Inter (REMOVED EXTERNAL LINK) -->
+    
     <!-- Tailwind CSS CDN - USED FOR DEVELOPMENT/DEMO ONLY -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-cdn" src="https://cdn.tailwindcss.com"></script>
     <script>
         // NOTE: For Production, remove the CDN above and compile Tailwind using PostCSS or CLI.
         tailwind.config = {
@@ -20,7 +17,8 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        // Will use system sans-serif if internet is down
+                        sans: ['Inter', 'sans-serif'], 
                     },
                     colors: {
                         'primary': '#057A55', // A nice green for e-commerce primary color
@@ -30,6 +28,16 @@
             }
         }
     </script>
+    
+    <!-- FALLBACK STYLES for when CDN FAILS (Minimal embedded CSS) -->
+    <style>
+        body { font-family: sans-serif; }
+        .no-internet-warning { 
+            position: fixed; top: 0; left: 0; width: 100%; padding: 10px; 
+            background: #f8d7da; color: #721c24; border-bottom: 1px solid #f5c6cb;
+            z-index: 10000; text-align: center; font-size: 14px;
+        }
+    </style>
 
     @yield('styles')
 </head>
@@ -37,12 +45,24 @@
     
     <!-- Dark Mode Initializer Script -->
     <script>
-        // Check local storage for theme preference and apply it instantly
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
+        
+        // INTERNET FAILURE DETECTOR (Checks if Tailwind CDN loaded)
+        document.addEventListener('DOMContentLoaded', function() {
+            const tailwindScript = document.getElementById('tailwind-cdn');
+            
+            // Check if the script exists and if it loaded successfully (hacky check for CDN failure)
+            if (tailwindScript && !window.tailwind) {
+                const warning = document.createElement('div');
+                warning.className = 'no-internet-warning';
+                warning.innerHTML = '⚠️ **WARNING:** Styles failed to load (No Internet/CDN Error). Display may be broken.';
+                document.body.prepend(warning);
+            }
+        });
     </script>
 
     <!-- Header Component -->

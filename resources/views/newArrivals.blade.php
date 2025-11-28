@@ -65,15 +65,30 @@
                                     ₱{{ number_format($product->price, 2) }}
                                 </span>
                             @endif
+
+                            <!-- Stock Indicator (NEW) -->
+                            @if ($product->stock <= 0)
+                                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mt-1">OUT OF STOCK</p>
+                            @elseif ($product->stock <= 5)
+                                <p class="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mt-1">Low Stock ({{ $product->stock }})</p>
+                            @endif
                         </div>
                         
                         <!-- Action Button (Form) - Ensures consistent button size/alignment -->
                         <form action="{{ route('cart.add') }}" method="POST" class="w-24 flex-shrink-0"> 
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <button type="submit" class="bg-primary text-white text-base py-2 px-2 rounded-full hover:bg-green-700 transition duration-300 shadow-md w-full">
-                                Add to Cart
-                            </button>
+                            
+                            @if ($product->stock > 0)
+                                <button type="submit" class="bg-primary text-white text-base py-2 px-2 rounded-full hover:bg-green-700 transition duration-300 shadow-md w-full">
+                                    Add to Cart
+                                </button>
+                            @else
+                                <button type="button" disabled class="bg-gray-400 text-white text-base py-2 px-2 rounded-full shadow-md cursor-not-allowed w-full">
+                                    Out of Stock
+                                </button>
+                            @endif
+
                         </form>
                     </div>
                 </div>

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\OTPVerification; 
 use App\Mail\ContactFormMail; 
 use Carbon\Carbon; 
+use Illuminate\Support\Facades\DB; // Ensure DB facade is imported for transactions
 
 class ShopController extends Controller
 {
@@ -188,9 +189,25 @@ class ShopController extends Controller
         $product = Product::find($productId);
         $quantity = 1;
         $cart = Session::get('cart', []);
+        
+        // --- STOCK CHECK FOR ADD TO CART (NEW) ---
+        // 1. Check if product is available at all
+        if ($product->stock === 0) {
+            return back()->with('error', "Sorry, {$product->name} is currently out of stock. Please check back later.");
+        }
+        
+        // 2. Check if new quantity exceeds stock
+        $currentCartQuantity = $cart[$productId]['quantity'] ?? 0;
+        $newTotalQuantity = $currentCartQuantity + $quantity;
+
+        if ($product->stock < $newTotalQuantity) {
+            return back()->with('error', "Sorry, only {$product->stock} unit(s) of {$product->name} are available in stock. You currently have {$currentCartQuantity} in your cart.");
+        }
+        // --- END STOCK CHECK ---
+
         $currentPrice = $product->sale_price ?? $product->price;
         if (isset($cart[$productId])) {
-            $cart[$productId]['quantity'] += $quantity;
+            $cart[$productId]['quantity'] = $newTotalQuantity;
         } else {
             $cart[$productId] = [
                 "id" => $productId, "name" => $product->name, "quantity" => $quantity, "price" => $currentPrice, 
@@ -214,12 +231,19 @@ class ShopController extends Controller
         $productId = $request->product_id;
         $newQuantity = $request->quantity;
         $productName = '';
+        $product = Product::find($productId); // Get product data for stock check
 
         if (Session::has('cart')) {
             $cart = Session::get('cart');
             
             if (isset($cart[$productId])) {
                 $productName = $cart[$productId]['name'];
+                
+                // --- STOCK CHECK FOR UPDATE (NEW) ---
+                if ($product && $newQuantity > $product->stock) {
+                    return back()->with('error', "Cannot update quantity. Only {$product->stock} unit(s) of {$productName} are in stock.");
+                }
+                // --- END STOCK CHECK ---
                 
                 if ($newQuantity <= 0) {
                     unset($cart[$productId]);
@@ -254,6 +278,40 @@ class ShopController extends Controller
             }
         }
         return redirect()->route('cart.view')->with('error', 'Item not found in cart.');
+    }
+    
+    // --- ORDER CANCELLATION (NEW) ---
+
+    public function cancelOrder(Order $order)
+    {
+        // 1. Authorization check (ensure current user owns the order)
+        if ($order->user_id !== Auth::id()) {
+            return back()->with('error', 'You are not authorized to cancel this order.');
+        }
+
+        // 2. State check (cancellation allowed only before shipping/completion)
+        if (in_array($order->status, ['shipped', 'completed', 'cancelled'])) {
+            return back()->with('error', 'This order is already ' . $order->status . ' and cannot be cancelled.');
+        }
+        
+        // 3. Perform Transaction (Update status and refund stock)
+        try {
+            DB::transaction(function () use ($order) {
+                // Set order status to cancelled
+                $order->update(['status' => 'cancelled']);
+
+                // Refund stock back to inventory
+                foreach ($order->items as $item) {
+                    Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                }
+            });
+            
+            return redirect()->route('profile.orders')->with('success', "Order #{$order->order_number} has been successfully cancelled and stock has been refunded.");
+            
+        } catch (\Exception $e) {
+            \Log::error("Order Cancellation Error: " . $e->getMessage());
+            return back()->with('error', 'A database error occurred during cancellation. Please try again.');
+        }
     }
     
     /**
@@ -327,7 +385,7 @@ class ShopController extends Controller
                 'currency' => 'PHP', 
                 'amount' => intval(round($item['price'] * 100)), // Unit Price
                 'name' => $item['name'], 
-                'quantity' => (int)$item['quantity'], 
+                'quantity' => (int)$item['quantity'], // Cast to int to prevent API error
             ]; 
         }
         
@@ -339,7 +397,6 @@ class ShopController extends Controller
             'quantity' => 1,
         ];
 
-        // REMOVED HARDCODED FALLBACK FOR SECURITY
         $secretKey = env('PAYMONGO_SECRET_KEY'); 
         $successUrl = route('checkout.success'); 
         $failureUrl = route('checkout.failure');
@@ -381,7 +438,9 @@ class ShopController extends Controller
 
         // --- REAL PAYMONGO API CALL ---
         try {
+            // FIX: Ignoring SSL verification for local dev (XAMPP/WSL/local machine issues)
             $response = Http::withBasicAuth($secretKey, '')
+                ->withOptions(['verify' => false]) 
                 ->post('https://api.paymongo.com/v1/checkout_sessions', $payload);
             
             if ($response->successful() && $response->json('data.attributes.checkout_url')) {
@@ -393,14 +452,14 @@ class ShopController extends Controller
             $apiError = $response->json('errors.0.detail') ?? 'Unknown API error.';
             \Log::error("PayMongo API Error: " . $response->body());
             
+            // Return specific API rejection message
             return back()->withErrors(['api' => 'Payment processor error: ' . $apiError])
                         ->withInput();
 
         } catch (\Exception $e) {
-            // Log the detailed connection error
             \Log::error("PayMongo Connection Error: " . $e->getMessage());
             
-            // Return a general connection error message
+            // Return general connection error message
             return back()->withErrors(['api' => 'Could not connect to payment gateway. Please check your network and PHP environment (CURL/SSL).'])
                         ->withInput();
         }
@@ -423,7 +482,11 @@ class ShopController extends Controller
             'status' => 'processing', 
         ]);
         
+        // --- INVENTORY FIX: DECREMENT STOCK ---
         foreach ($orderData['cart_items'] as $productId => $item) {
+            // Find the product and decrement stock by the quantity purchased
+            Product::where('id', $productId)->decrement('stock', $item['quantity']); 
+
              OrderDetail::create([ 
                  'order_id' => $order->id, 
                  'product_id' => $item['id'], 
