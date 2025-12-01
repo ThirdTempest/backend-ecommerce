@@ -21,8 +21,8 @@ return [
 
     'allowed_origins' => [
         'http://localhost:9000', // Typical Quasar Dev Port
-        'http://127.0.0.1:9000',
-        // Add your production domain here later
+        'http://localhost:9000',
+        'e-shop-chi-puce.vercel.app',
     ],
 
     'allowed_origins_patterns' => [],
