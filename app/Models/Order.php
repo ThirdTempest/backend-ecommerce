@@ -16,6 +16,9 @@ class Order extends Model
         'shipping_address',
         'billing_address',
         'status',
+        // FIX: Added these two fields so they can be saved to the database
+        'payment_method',
+        'phone',
     ];
 
     /**
@@ -25,9 +28,9 @@ class Order extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
-     * An Order has many OrderDetails (items).
+     * An Order has many OrderDetails (Items).
      */
     public function items()
     {

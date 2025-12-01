@@ -2,40 +2,37 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+// 1. Add this import line
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    // 2. Add HasApiTokens to this list
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'is_admin', // Custom field
-        'otp_code', // <-- MUST BE ADDED
-        'otp_expires_at', // <-- MUST BE ADDED
-        'email_verified_at', // <-- MUST BE ADDED
+        'otp_code',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
         'remember_token',
-        'otp_code', // Hiding OTP from API responses is a good practice
     ];
 
     /**
@@ -43,15 +40,11 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'otp_expires_at' => 'datetime',
-        'password' => 'hashed',
-        'is_admin' => 'boolean',
-    ];
-    
-    public function orders()
-{
-    return $this->hasMany(\App\Models\Order::class);
-}
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
 }

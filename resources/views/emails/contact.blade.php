@@ -5,7 +5,7 @@
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6;">
     <h2 style="color: #057A55;">New Contact Form Submission</h2>
-    
+
     <p>A user submitted an inquiry via the Contact Us form:</p>
 
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
