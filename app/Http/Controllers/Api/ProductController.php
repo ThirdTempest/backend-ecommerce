@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProductResource;
+
 class ProductController extends Controller
 {
     // Fetch products with Filtering and Searching
@@ -28,7 +29,14 @@ class ProductController extends Controller
             });
         }
 
-        // 3. Sort by newest
+        // 3. Handle Sale Filter (FIX for Sale Page)
+        // Usage: /api/products?on_sale=true
+        if ($request->has('on_sale') || $request->has('sale')) {
+            $query->whereNotNull('sale_price')
+                  ->whereColumn('sale_price', '<', 'price');
+        }
+
+        // 4. Sort by newest
         $query->latest();
 
         // Return 12 items per page
