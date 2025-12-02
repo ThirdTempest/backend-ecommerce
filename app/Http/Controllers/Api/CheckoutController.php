@@ -106,6 +106,8 @@ class CheckoutController extends Controller
                 ];
             }
 
+           $frontendUrl = env('FRONTEND_URL', 'http://localhost:9000');
+
             // Call PayMongo
             $response = Http::withHeaders([
                 'Authorization' => 'Basic ' . base64_encode(env('PAYMONGO_SECRET_KEY')),
@@ -121,9 +123,11 @@ class CheckoutController extends Controller
                         ],
                         'line_items' => $lineItems,
                         'payment_method_types' => ['gcash', 'card', 'grab_pay', 'paymaya'],
-                        'success_url' => env('APP_URL') . ":9000/#/checkout/success?order_number={$orderNumber}",
-                        // FIX: Redirect to a Cancel Handler Page instead of just the cart
-                        'cancel_url' => env('APP_URL') . ":9000/#/checkout/cancel?order_id={$order->id}",
+
+                        // FIX: Point to Vercel URL
+                        'success_url' => "{$frontendUrl}/#/checkout/success?order_number={$orderNumber}",
+                        'cancel_url' => "{$frontendUrl}/#/checkout/cancel?order_id={$order->id}",
+
                         'description' => "Order #{$orderNumber}",
                         'reference_number' => $orderNumber
                     ]
