@@ -66,7 +66,7 @@ class OtpController extends Controller
         $user->save(); // This updates 'updated_at' timestamp
 
         try {
-            Mail::to($user->email)->send(new OtpVerification($otp));
+            Mail::to($user->email)->queue(new OtpVerification($otp));
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Email failed: ' . $e->getMessage()
