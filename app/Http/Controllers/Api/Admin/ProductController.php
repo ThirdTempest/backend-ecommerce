@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\ProductResource;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str; // Import Str for slug generation
 
 class ProductController extends Controller
 {
@@ -57,7 +58,11 @@ class ProductController extends Controller
             // 3. Clean up array for Database
             unset($validated['image']);
 
-            // 4. Create Product (Wrap in Try-Catch to see DB errors)
+            // 4. Auto-generate Slug (FIX for Error 1364)
+            // Example: "Leather Jacket" -> "leather-jacket-1764020612"
+            $validated['slug'] = Str::slug($validated['name']) . '-' . time();
+
+            // 5. Create Product (Wrap in Try-Catch to see DB errors)
             // Force fill all attributes (bypasses $fillable protection for debugging)
             $product = new Product();
             $product->forceFill($validated);
