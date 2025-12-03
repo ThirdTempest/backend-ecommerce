@@ -99,14 +99,24 @@ Route::get('/debug-config', function () {
         $dbStatus = 'failed: ' . $e->getMessage();
     }
 
+    $userTableExists = false;
+    try {
+        $userTableExists = \Illuminate\Support\Facades\Schema::hasTable('users');
+    } catch (\Exception $e) {
+        // ignore
+    }
+
     return [
         'app_url' => config('app.url'),
         'frontend_url' => env('FRONTEND_URL'),
         'sanctum_stateful_domains' => env('SANCTUM_STATEFUL_DOMAINS'),
         'session_domain' => config('session.domain'),
+        'session_secure_cookie' => config('session.secure'),
+        'session_same_site' => config('session.same_site'),
         'cors_allowed_origins' => config('cors.allowed_origins'),
         'db_status' => $dbStatus,
-        'db_host' => config('database.connections.mysql.host'), // Safe to show host
+        'db_host' => config('database.connections.mysql.host'),
+        'users_table_exists' => $userTableExists,
         'mailer' => config('mail.default'),
     ];
 });
