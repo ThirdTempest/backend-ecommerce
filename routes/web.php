@@ -91,10 +91,22 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
 });
 
 Route::get('/debug-config', function () {
+    $dbStatus = 'disconnected';
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        $dbStatus = 'connected';
+    } catch (\Exception $e) {
+        $dbStatus = 'failed: ' . $e->getMessage();
+    }
+
     return [
+        'app_url' => config('app.url'),
+        'frontend_url' => env('FRONTEND_URL'),
+        'sanctum_stateful_domains' => env('SANCTUM_STATEFUL_DOMAINS'),
+        'session_domain' => config('session.domain'),
+        'cors_allowed_origins' => config('cors.allowed_origins'),
+        'db_status' => $dbStatus,
+        'db_host' => config('database.connections.mysql.host'), // Safe to show host
         'mailer' => config('mail.default'),
-        'resend_key_configured' => !empty(config('services.resend.key')),
-        'resend_driver_exists' => class_exists(\Resend\Laravel\Transport\ResendTransportFactory::class),
-        'env_mailer' => env('MAIL_MAILER'),
     ];
 });
