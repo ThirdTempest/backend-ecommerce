@@ -23,6 +23,10 @@ class User extends Authenticatable
         'email',
         'password',
         'otp_code',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_type',
+        'face_descriptor',
     ];
 
     /**
@@ -33,7 +37,25 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'face_descriptor',
     ];
+
+    protected $appends = [
+        'has_totp',
+        'has_face',
+    ];
+
+    public function getHasTotpAttribute()
+    {
+        return !is_null($this->two_factor_secret);
+    }
+
+    public function getHasFaceAttribute()
+    {
+        return !is_null($this->face_descriptor);
+    }
 
     /**
      * Get the attributes that should be cast.

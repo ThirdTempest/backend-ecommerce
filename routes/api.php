@@ -32,6 +32,12 @@ Route::post('/contact', [ContactController::class, 'store']);
 Route::post('/paymongo/webhook', [WebhookController::class, 'handle']);
 Route::post('/otp/resend', [App\Http\Controllers\Api\OtpController::class, 'resend']);
 
+// QR Login (Public)
+Route::get('/qr/generate', [App\Http\Controllers\Api\QrLoginController::class, 'generate']);
+Route::post('/qr/check', [App\Http\Controllers\Api\QrLoginController::class, 'check']);
+
+
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (Login Required)
@@ -56,6 +62,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // User Addresses
     Route::get('/user/addresses', [App\Http\Controllers\Api\AddressController::class, 'index']);
+
+    // 2FA Management
+    Route::post('/2fa/enable', [App\Http\Controllers\Api\TwoFactorController::class, 'enable']);
+    Route::post('/2fa/disable', [App\Http\Controllers\Api\TwoFactorController::class, 'disable']); // Removes TOTP
+    Route::post('/2fa/preference', [App\Http\Controllers\Api\TwoFactorController::class, 'setPreference']);
+    Route::post('/2fa/verify', [App\Http\Controllers\Api\TwoFactorController::class, 'verify']);
+
+    Route::post('/face/register', [App\Http\Controllers\Api\FaceAuthController::class, 'register']);
+    Route::post('/face/remove', [App\Http\Controllers\Api\FaceAuthController::class, 'remove']);
+    Route::post('/face/verify', [App\Http\Controllers\Api\FaceAuthController::class, 'verify']);
+
+    // QR Login (Protected)
+    Route::post('/qr/authorize', [App\Http\Controllers\Api\QrLoginController::class, 'authorizeSession']);
 
     // ADMIN ROUTES
     Route::middleware(['admin'])->prefix('admin')->group(function () {

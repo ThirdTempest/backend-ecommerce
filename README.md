@@ -1,70 +1,51 @@
-🇵🇭 E-SHOP
+Project Setup Guide
+This guide provides step-by-step instructions on how to set up and run the E-SHOP application (Backend & Frontend) locally after cloning the repository from GitHub.
 
+1. Prerequisites
+Ensure you have the following installed on your machine:
 
-✨ Key Features
+PHP (v8.2 or higher)
+Composer (Dependency Manager for PHP)
+Node.js (v18 or higher) & NPM
+MySQL (Database)
+Git
+2. Clone the Repository
+git clone <your-repo-url>
+cd <your-repo-folder>
+3. Backend Setup (Laravel)
+The backend is located in the 
+Ecomercebackend
+ directory.
 
-Tailwind CSS V3: Fully responsive design with Dark Mode support across all pages (class strategy).
-
-Secure Authentication: User registration includes mandatory OTP Email Verification before login.
-
-Role Management: Segregated access for Admin users (is_admin=1).
-
-Checkout Flow: Multi-step cart management, shipping information collection, and integration readiness for PayMongo Checkout Sessions.
-
-Product Management (Admin): Full CRUD for products, including real file storage logic (saving the image_url path) and inventory monitoring.
-
-Dynamic UI: Home page features image placeholders for rotating banners and dynamic product sections (New Arrivals, Sale).
-
-🛠️ Installation and Setup
-
-Prerequisites
-
-PHP (8.2+)
-
-Composer
-
-MySQL Database (or equivalent supported by Laravel)
-
+Step 1: Navigate to Backend Directory
+cd Ecomercebackend
+Step 2: Install Dependencies
 composer install
-
+Step 3: Configure Environment
+Copy the example environment file:
 cp .env.example .env
-
-php artisan key:generate
-
-* set up your .env [ DATABASE, MAILER, PAYMONGO API AND WEBHOOK]
-
+Open 
+.env
+ and configure your database settings:
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=[DATABASE]
-DB_USERNAME=[USERNAME]
-DB_PASSWORD=[PASSWORD]
+DB_DATABASE=ecommerce_db  # Make sure this database exists in MySQL
+DB_USERNAME=root          # Your MySQL username
+DB_PASSWORD=              # Your MySQL password
+Configure Email (Required for OTP):
+Option A (Resend - Recommended):
+MAIL_MAILER=resend
+RESEND_KEY=re_123456... # Get from resend.com
+MAIL_FROM_ADDRESS=onboarding@resend.dev
+Option B (Log - For offline testing):
+MAIL_MAILER=log
+Step 4: Generate App Key
+php artisan key:generate
+Step 5: Run Migrations
+Create the database tables:
 
-MAIL_MAILER=smtp
-MAIL_SCHEME=null
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=[GMAIL]
-MAIL_PASSWORD=[GMAILPASSWORD]
-MAIL_FROM_ADDRESS=[GMAIL]
-MAIL_FROM_NAME="${APP_NAME}"
-
-# PayMongo
-PAYMONGO_PUBLIC_KEY=[PUBLICAPI]
-PAYMONGO_SECRET_KEY=[SECRETAPI]
-PAYMONGO_WEBHOOK_SECRET= [WEBHOOKURL]       
-
-# Payments config
-CURRENCY=PHP
-PAYMONGO_PAYMENT_METHOD_TYPES=gcash,paymaya,card
-
-import the ecommerce.sql into database.
-
-composer require paymongo/paymongo-php
-
-php artisan storage:link
-
+php artisan migrate
+Step 6: Start the Server
 php artisan serve
-
-
-# backend-ecommerce
+The backend will run at http://127.0.0.1:8000.

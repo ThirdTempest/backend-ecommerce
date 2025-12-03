@@ -31,6 +31,7 @@ class AuthController extends Controller
         ]);
 
         try {
+            \Log::info("DEV OTP for {$user->email}: {$otp}");
             Mail::to($user->email)->send(new OtpVerification($otp));
         } catch (\Exception $e) {
             \Log::error("Failed to send OTP: " . $e->getMessage());
@@ -56,12 +57,49 @@ class AuthController extends Controller
 
         $user = User::where('email', $request['email'])->firstOrFail();
 
+        // Check 2FA Type
+        $type = $user->two_factor_type ?? 'email'; // Default to email
+
+        // Allow overriding preference to force Email OTP (e.g. from Credentials tab)
+        if ($request->boolean('force_email')) {
+            $type = 'email';
+        }
+
+        // Determine available methods
+        $availableMethods = ['email'];
+        if ($user->two_factor_secret) {
+            $availableMethods[] = 'totp';
+        }
+        if ($user->face_descriptor) {
+            $availableMethods[] = 'face';
+        }
+
+        if ($type === 'totp') {
+            return response()->json([
+                'message' => 'Please enter your TOTP code.',
+                'require_otp' => true,
+                'otp_type' => 'totp',
+                'available_methods' => $availableMethods,
+                'email' => $user->email
+            ]);
+        } elseif ($type === 'face') {
+             return response()->json([
+                'message' => 'Please scan your face.',
+                'require_otp' => true,
+                'otp_type' => 'face',
+                'available_methods' => $availableMethods,
+                'email' => $user->email
+            ]);
+        }
+
+        // Default: Email OTP
         // 2. Generate New OTP for Login 2FA
         $otp = rand(100000, 999999);
         $user->otp_code = $otp;
         $user->save();
 
         // 3. Send OTP Email
+        \Log::info("DEV OTP for {$user->email}: {$otp}");
         try {
             Mail::to($user->email)->send(new OtpVerification($otp));
         } catch (\Exception $e) {
@@ -73,7 +111,10 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'OTP sent to your email.',
             'require_otp' => true,
-            'email' => $user->email
+            'otp_type' => 'email',
+            'available_methods' => $availableMethods,
+            'email' => $user->email,
+            'dev_otp' => config('app.debug') ? $otp : null // Only return in debug mode
         ]);
     }
 
