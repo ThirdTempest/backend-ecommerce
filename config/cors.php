@@ -20,7 +20,8 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        rtrim(env('FRONTEND_URL', 'http://localhost:9000'), '/'),
+        // DEBUG: Hardcoded to rule out Env Var issues
+        'https://e-shop-chi-puce.vercel.app',
         'http://localhost:9000',
     ],
 
