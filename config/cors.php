@@ -20,10 +20,8 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://e-shop-chi-puce.vercel.app',
-        'http://localhost:9000', // Typical Quasar Dev Port
+        env('FRONTEND_URL', 'http://localhost:9000'),
         'http://localhost:9000',
-
     ],
 
     'allowed_origins_patterns' => [],
