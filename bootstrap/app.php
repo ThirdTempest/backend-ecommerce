@@ -17,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'login',
             'register',
             'logout',
-            'sanctum/csrf-cookie'
+            'sanctum/csrf-cookie',
+            'api/*',
         ]);
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdmin::class,
